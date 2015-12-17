@@ -6,7 +6,7 @@ import scapy.all as s
 
 def dostuff( pcap ):
     totpkt = totsyn = totsynack = totack = totfin = 0
-
+    test = 0
     pkts = s.rdpcap(pcap)
     flags = {
     	'F': 'FIN',
@@ -20,20 +20,22 @@ def dostuff( pcap ):
 	}
 
     for p in pkts:
+        F = [flags[x] for x in p.sprintf('%TCP.flags%')]
         totpkt += 1
-        if 'SYN' in [flags[x] for x in p.sprintf('%TCP.flags%')]:
+        if 'SYN' in F:
             totsyn += 1
-            if 'ACK' in [flags[x] for x in p.sprintf('%TCP.flags%')]:
+            if 'ACK' in F:
                 totsynack += 1
-        if 'FIN' in [flags[x] for x in p.sprintf('%TCP.flags%')]:
+        if 'FIN' in F:
             totfin += 1
-        if 'ACK' in [flags[x] for x in p.sprintf('%TCP.flags%')]:
+        if 'ACK' in F:
             totack += 1
-            # if 'SYN' in [flags[x] for x in p.sprintf('%TCP.flags%')]:
-            #     totack -= 1
-        print [flags[x] for x in p.sprintf('%TCP.flags%')]
+
+        if 'SYN' and not 'ACK' in F and len(F) > 1:
+            test += 1
 
     print('Total SYN:', totsyn, 'total SYN-ACK:', totsynack , 'and total ACK:', totack, 'total FIN:', totfin, 'for total pkts:', totpkt)
+    print('TEST SYN no ACK but not SYN only:', test)
 
 def main():
     parser = argparse.ArgumentParser()
