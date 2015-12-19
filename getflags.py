@@ -15,17 +15,6 @@ def dostuff( pcap ):
 
     pkts = s.rdpcap(pcap)
 
-# alex@physbuntu:~/git_projects/scapy$ tcpdump -r tcp-ecn-sample.pcap | cut -d'[' -f2 | cut -d']' -f1 | sort | uniq -c
-# reading from file tcp-ecn-sample.pcap, link-type EN10MB (Ethernet)
-#     299 .
-#     130 .E
-#       1 FP.
-#       1 FP.E
-#       1 S.E
-#       1 SEW
-#      46 .W
-# alex@physbuntu:~/git_projects/scapy$ fg
-
     flags = {'F':'FIN','S':'SYN','R':'RST','P':'PSH','A':'ACK','U':'URG','E':'ECE','C':'CWR'}
 
     for p in pkts:
@@ -36,13 +25,13 @@ def dostuff( pcap ):
         if 'SYN' in F and len(F) == 1:
             totsynonly += 1
 
-        if 'SYN' and 'ECE' and 'CWR' in F and len(F) == 3:
+        if all((f in F for f in ['SYN','ECE','CWR'])) and len(F) == 3:
             totsynece += 1
 
-        if 'SYN' and 'ACK' in F and len(F) == 2:
+        if all((f in F for f in ['SYN','ACK'])) and len(F) == 2:
             totsynack += 1
 
-        if 'SYN' and 'ACK' in F and len(F) > 2:
+        if all((f in F for f in ['SYN','ACK'])) and len(F) > 2:
             if not 'ECE' and not 'CWR' in F:
                 totinvalidsynack += 1
 
@@ -53,8 +42,9 @@ def dostuff( pcap ):
         if 'ACK' in F and len(F) == 1:
             totlegalack += 1
 
-        if not 'SYN' and not 'ACK' in F and len(F) >= 1:
-            totnoackillegal += 1
+        if 'ACK' not in F:
+            if 'SYN' not in F:
+                totnoackillegal += 1
 
         if len(F) >= 6:
             totxmas += 1
@@ -62,11 +52,10 @@ def dostuff( pcap ):
         if len(F) == 0:
             totnull += 1
 
-        if all((f in F for f in ['SYN', 'FIN'])): # if 'SYN' and 'FIN' in F:
+        if all((f in F for f in ['SYN', 'FIN'])):
             totsynfinscan += 1
-            print F
-            
-        if any((f in F for f in ['ECE','CWR'])): # if 'ECE' or 'CWR' in F: # TODO: needs breaking down to check if it really works
+
+        if any((f in F for f in ['ECE','CWR'])):
             totcongestioncontrol += 1
 
         if 'ECE' in F:
@@ -75,29 +64,26 @@ def dostuff( pcap ):
         if 'CWR' in F:
             totcwr += 1
 
-        if 'FIN' and 'ACK' in F and len(F) == 2:
+        if all((f in F for f in ['FIN','ACK'])) and not 'PSH' in F:
             totgracefullfin += 1
 
-        if 'FIN' and 'ACK' and 'PSH' in F and len(F) ==3:
+        if all((f in F for f in ['FIN','ACK','PSH'])):
             totgracefullfinpsh += 1
 
         if 'RST' in F and len(F) == 1:
             totrst += 1
 
-        if 'RST' and 'ACK' in F and len(F) == 2:
+        if all((f in F for f in ['RST','ACK'])) and len(F) == 2:
             totrstack += 1
 
-        if 'PSH' and 'ACK' in F and len(F) == 2:
+        if all((f in F for f in ['PSH','ACK'])) and len(F) == 2:
             totphsack += 1
 
-        if 'URG' and 'ACK' in F and len(F) == 2:
+        if all((f in F for f in ['URG','ACK'])) and len(F) == 2:
             toturgack += 1
 
-        if 'PSH' and 'URG' and 'ACK' in F and len(F) == 3:
+        if all((f in F for f in ['PSH','URG','ACK'])) and len(F) == 3:
             totveryurg += 1
-
-        # if not 'ACK' or 'SYN' in F and len(F) > 1:
-        #     print F
 
     print '-----'
     print 'Total number of packets:', totpkt
@@ -125,7 +111,6 @@ def dostuff( pcap ):
     print 'XMAS scan:', totxmas
     print 'NULL scan:', totnull
     print 'SYN-FIN scan:', totsynfinscan
-
 
 def main():
     parser = argparse.ArgumentParser()
