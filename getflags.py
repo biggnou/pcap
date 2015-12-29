@@ -35,15 +35,16 @@ def dostuff( pcap ):
             if not 'ECE' and not 'CWR' in F:
                 totinvalidsynack += 1
 
-        if 'SYN' and not 'ACK' in F and len(F) > 1:
-            if 'ECE' not in F:
-                totsyninvalid += 1
+        if 'SYN' in F and len(F) > 1:
+            if 'ACK' not in F:
+                if not any((f in F for f in ['ECE','CWR'])):
+                    totsyninvalid += 1
 
         if 'ACK' in F and len(F) == 1:
             totlegalack += 1
 
         if 'ACK' not in F:
-            if 'SYN' not in F:
+            if not any((f in F for f in ['SYN','RST'])):
                 totnoackillegal += 1
 
         if len(F) >= 6:
