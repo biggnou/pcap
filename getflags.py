@@ -18,6 +18,7 @@ def dostuff( pcap ):
     flags = {'F':'FIN','S':'SYN','R':'RST','P':'PSH','A':'ACK','U':'URG','E':'ECE','C':'CWR'}
 
     for p in pkts:
+        # print p.sprintf("%IP.len%") ## pkt size (TODO: try and detect jumb sized frames)
         F = [flags[x] for x in p.sprintf('%TCP.flags%')]
         totpkt += 1
         # based on: http://www.symantec.com/connect/articles/abnormal-ip-packets
